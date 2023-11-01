@@ -1,0 +1,219 @@
+VMProtect Ultra Unpacker 1.0
+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+Short description
+--------------------------------------------
+So before you use the script you have to setup it at the USER_OPTIONS label.
+Enter "your" path to the ARImpRec.dll.
+GTC_ON can you keep with 01 to patch the HWBP detection!
+Show_Windows_Version can you set to 00 or 02 or 01 like you want it.
+KEEP_PACKER_IMPORTS is set to 01 so this you can also disable if you want.
+
+//////////////////////////////////////////////////////////////////
+USER_OPTIONS:
+mov ARIMPREC_PATH,       "C:\VMProtect Ultra Unpacker 1.0 Tutorial\ARImpRec.dll"
+mov GTC_ON,               01  // Enable it to patch the GTC API direct - set to 00 = disbaled
+mov Show_Windows_Version, 02  // Does show your windows see below
+mov KEEP_PACKER_IMPORTS,  01  // Some VMP code can still use this imports in your dump!Set to 01 to keep them!
+//////////////////////////////////////////////////////////////////
+
+Show_Windows_Version 00 or 01 or 02
+
+//  00 = Get only Name
+//  01 = Get WinVersion and Name
+//  02 = All disbaled
+
+
+The script works on 2 ways.First it try to find the OEP and created a new txt file where it logs at OEP RVA address at the top.So if the script failed to find OEP near OEP then you have to find the OEP by yourself and enter RVA into the txt file and save.
+
+Now after this you can run the script again and it starts the unpack process.
+
+
+
+- OEP of dll if obfuscated
+--------------------------------------------
+Script will not find the OEP for dlls if the OEP is obuscated and alone executed in VM without to reach the codesection if you use loaddll.exe!!!!
+
+Also be sure that the found OEP by the script is the right address.So you can also find the OEP near stop at OEP manually and then enter the RVA address into the OEP txt file at the top.
+
+OEP RVA of UnPackMe.exe - .txt  // Create file with the name of your file "UnPackMe.exe" open it and enter your found OEP near OEP RVA address into like 00006564 or 6564
+
+In some cases its tricky to find and rebuild the OEP data.Just check the VMProtector itself. ;) There you need to be a little creativ.In that case find OEP manually first!
+
+- API LOGGER
+--------------------------------------------
+
+What is a API LOGGER?
+
+I call it API LOGGER,so it's the address where VMP hold the direct API address in register eax which will used and changed to new Re-Calculated APIs = VMed APIs!
+
+Exsample: 
+
+7C80981A InterlockedDecrement at API LOGGER address
+-------------
+VMP does re-calc [encrypt] the the direct address and put the new values for decrypt into target.
+
+0052750D  MOV EBX,434E18
+004FB3C5  MOV EBX,DWORD PTR DS:[EBX+1124BC] points to 005472D4
+-------------------
+005472D4  D0D29D85
+
+EBX = D0D29D85
+
+004FB3CF  LEA EBX,DWORD PTR DS:[EBX+ABADFA95] points to 7C80981A InterlockedDecrement
+
+004FB402  RETN 40 = return to direct API InterlockedDecrement
+
+So remember if the script tell you something about found VMed APIs then I mean only this kind of APIs.
+
+
+How to find the API LOGGER Address manually?
+-----------------
+
+If you have to find the API LOGGER manually then there are some diffrent ways to find the right address.
+
+- Mem BP on kernel32 PE then find VM retrun = API in eax
+- LoadLibraryA called from VMP = API LOGGER
+- CreateFileW | FileName = path to target which is in Olly | return to VMP = API LOGGER ADDR
+- GetModuleHandleA | GetProcAddress = optional used APIs for older versions
+
+So for all you will the API address in eax.
+
+Note: Newer version like 2.12 are little harder to find the API LOGGER return.
+
+1. LoadLibraryA called by VMP called first the kernel32 dll and read the protector APIs like..
+
+kernel32.dll
+--------------------------------------------
+   - VirtualProtect              | Windows XP [desktop apps only]
+   - VirtualAlloc                | Windows XP [desktop apps only]
+   - CreateFileW                 | Windows XP [desktop apps only]
+   - CloseHandle                 | Windows 2000 Professional [desktop apps | Windows Store apps]
+   - GetFileSize                 | Windows XP [desktop apps only]
+   - CreateFileMappingW          | Windows XP [desktop apps only]
+   - MapViewOfFile               | Windows XP [desktop apps only]
+   - UnmapViewOfFile             | Windows XP [desktop apps | Windows Store apps]
+   - IsDebuggerPresent           | Windows XP [desktop apps | Windows Store apps]
+   ----------------------------------------------------------------------------------------------
+   - CheckRemoteDebuggerPresent  | Windows Vista, Windows XP with SP1 [desktop apps only]
+   ----------------------------------------------------------------------------------------------
+   - GetThreadContext            | Windows XP [desktop apps only]
+   - UnhandledExceptionFilter    | Windows XP [desktop apps only]
+
+ntdll.dll
+--------------------------------------------
+   - ZwQueryInformationProcess   | Windows XP [desktop apps only]
+   - ZwSetInformationThread      | Available in Windows 2000 and later versions of Windows
+   - ZwQuerySystemInformation
+   - MessageBoxW  <---- If it catch you = detected!
+
+Start of real target API now!
+--------------------------------------------
+
+So if you have to find that API LOGGER ADDR manually then you have to bypass a lot code and checks in the worst case.
+After return of LLA API back to VMP has loaded / get the kernel32 base in eax.Now set a mem bp access on kernel32 base PE Header.
+
+010CDF3E   MOV ESI,DWORD PTR DS:[EAX+3C] ; eax = kernel32 base | PE offset to esi
+010CDF4D   ADD ESI,EAX                   ; + Base = PE START
+010CDF5E   MOV EDX,DWORD PTR DS:[ESI+78] ; Export Table address = 262C to edx
+010CDF66   TEST EDX,EDX                  ; test if present
+010B6E9D   JE 010BA859                   ; Jump of present
+....
+           Here come more checks which you can also follow till the end but its not needed.
+------------------------------------------------------------------------------------
+So the kernel32.dll has of course exports and the JE command will jump "BUT" if you set edx to 00 or just patch the JE to not jump then it will access the return address which we need which is our API LOGGER ADDR.
+
+010B767A   RETN 34                       ; API LOGGER ADDR
+------------------------------------------------------------------------------------
+So this is a little trick for you to find the return quickly!If you run the target now then you will get a error by VMP with the message "The procedure entry point VirtualAlloc ("first API in that case by VMP") could not be located in dynamic link library kernel32.dll.Of course you get this message so we did set found export table to 00 and VMP can not get the APIs anymore on that way.Just force this way if you have to find the API LOGGER manually to come quickly to the end return address.So in that case the API LOGGER address is 010B767A VA.Now just restart the target set a HWBP on that address and lets verify whether we have the right address.Yes it is.On that address we get all VMed APIs by the protector which used the protector itself and also the VMed API which will decrypted by VMP later which is using the real target.Now if you have the address then you can start to run my script and then just enter this address 010B767A if it ask you.
+
+Also you can use the address after the return 01170013
+
+01170013   CALL 0116DE5B                 ; 
+
+So here it breaks more times later where you can also see some other none API addresses and handles and filesizes etc.
+
+If the script can not find the API LOGGER ADDR then you can find it manually and later you can enter the address if the script ask you.
+ 
+
+
+- IAT
+--------------------------------------------
+The script will redirect all VMed APIs to own section.All VMed API which are used in target itself will after re-redirected to real APIs.The script will also use a normal API scan with references,so if found then all API will logged into the new custom import table which the script creates.So you don't need to use any IAT fixer tool like ImpRec or Scylla anymore!
+
+Also the script can scan the codesection for all normal API which are not VMed so in some cases the targets use them too or just these if no VMed API are used.So this scan can take a longer time if the codesection is very large but you can also disable it if the script ask you but ONLY do this if you are really sure that not real APIs are used anymore.If you are not sure about this then let do this scan if it goes to long then drink a coffee in the meantime.
+
+
+
+FIND_NORMAL_IAT:
+-------------------------------------
+Do you wanna let scan the codesection for normal reference imports?
+-------------------------------------
+Does scan the codesection for all basic API commands 
+
+call    [dword] - API
+jmp     [dword] - API 
+mov r32,[dword] - API
+-------------------------------------
+If found then they will added to the import table.
+This scan can take a longer time.
+In some cases VMP does use such APIs too.
+
+---------- IAT Data to fix ----------
+Here you can see the found results after the scan from above.If nothing was found then you get 0 results + one 4 byte result for the size.
+-------------------------------------
+
+
+Check for VMed API in the target?
+-------------------------------------
+Check the whole target for VMed APIs?
+Check only codesection for VMed APIs?
+
+VMed API: That are APIs which was redirected by the script at API LOGGER address.So if VMP does use this APIs in the real target too then you need to let find and fix them if not then you can disable that scan & fix.
+
+Exsample:
+01001000  011A00A8  JMP to ADVAPI32.RegOpenKeyExA
+
+Here VMP does use one of our redirected VMed API address in the codesection itself.So for normal API its no problem if you keep this so but not if the target used 
+
+offset / string API like...
+
+010011F0  011A005A  JMP to OFFSET msvcrt._acmdln
+01001200  011A0072  JMP to OFFSET msvcrt._adjust_fdiv
+
+...if you not relove them then your dump does crash!
+
+So if you press YES on "Check for VMed API in the target?" then the script does scan for this APIs and does resolve them with the direct API addresses back and add them also to the import table.
+
+Problem: So if you code does use the same bytes for a address like a VMed API and it
+         is no real VMed API and just a same byte pattern then the scipt does fix it 
+         too!So keep this your mind if you use this scan and if your dump later makes
+         some trouble [access exception etc].In that case try to remove the import from 
+         the list and copy the original bytes back on that address and save.
+
+After using that option you will see this
+-------------------------------------------------
+01001000  77DA7852  ADVAPI32.RegOpenKeyExA
+010011F0  77C317AC  OFFSET msvcrt._acmdln
+01001200  77C323D8  OFFSET msvcrt._adjust_fdiv
+-------------------------------------------------
+
+
+LOG_ALL_FOUND_ADRESSES_AND_APIS:
+-------------------------------------------------
+
+This scan does scan the target for all found direct APIs addresses and logged them into imports.Here you can again choose only codesection or whole target.
+
+HINT: If the script ask your to scan the whole target then choose "YES"
+
+
+Resources AntiDump Protection:
+-------------------------------------------------
+The script will create a dynamic code which does read and patch the four APIs which are used in realtime for each diffrent system.So it is no static patch its a dynamic patch so that your unpacked files will work on all systems.
+
+
+- Final
+-------------------------------------------------
+All in all this new script is really a very new good and better alternative to my older VMP scripts.I have spend a lot time with that script and I hope it will help you to unpack your VMProtect targets in the future.
+
+LCF-AT

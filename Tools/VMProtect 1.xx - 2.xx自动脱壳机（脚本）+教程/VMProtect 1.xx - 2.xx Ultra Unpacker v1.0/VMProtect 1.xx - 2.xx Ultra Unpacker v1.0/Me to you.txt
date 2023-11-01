@@ -1,0 +1,245 @@
+Hello,
+
+today I wanna show you how to use my new Unpack Script for VMProtect called..
+
+VMProtect Ultra Unpacker 1.0
+------------------------------------------------------------------------------
+
+So this new script will unpack your VMProtected files almost in a automatic way. 
+
+Script can fail on: 
+----------------------------
+Find OEP & Find API LOGGER
+
+If the script failed on that 2 or one of them things then you have to find it manually.
+
+- Find OEP or a close break after the OEP / stolen OEP / sub routine so that you have a address.
+  Create a new txt file called "OEP RVA of UnPackMe.exe - .txt" 
+  [enter you target name at "UnPackMe.exe"] and enter your found OEP RVA address at the txt 
+  start like 00001000 or just 1000 [ONLY RVA]!After creating that txt file the script will read
+  it and start the unpack process on a another run.
+
+- Find API LOGGER | If the script failed then your target does use no VMed APIs or it has not
+  found the API LOGGER address.If situation two is true then find the API LOGGER address manually 
+  and enter the VA or RVA address if the script ask you about it.Just use the found return address 
+  which you found.I will show you now how to find it manually on a very easy way.
+----------------------------
+
+Thats all what you have to find manually in the worst case so in the most cases the script does
+find it by itself.
+
+Ok before I start to show you how to use my script I will show you the main Olly & Plugin setup 
+for VMProtect to get your targets normaly run in Olly.
+
+START:
+----------------------------
+- Olly & Plugin Setup
+
+VMProtect Target setup
+---------------------------------
+Anti-Debug Main Setup / JUST ENABLE....
+---------------------------------
+ -StrongOD
+---------------------------------
+- HidePEB         Enable
+- *KernelMode     Enable
+- Break on TLS    Enable = Always for VMP
+- !*Kill Bad PE   Enable = optional
+- Skip some EC's  Enable
+- AdvEnumModule   Enable = If target not stop at TLS or EP then enable it.
+- Remove EP OS    Enable = Delete one shot EP BP at TLS stop
+---------------------------------
+- Change Original Drivername into OllyDBG.ini file!
+  DriverName=newcustom 
+---------------------------------
+---------------------------------
+ -Phant0m | For XP & Win7 32 Bit
+---------------------------------
+- Protect DRx     Enable
+---------------------------------
+The script does work with HWBPs so keep DRx enabled!
+
+
+
+
+
+Find API LOGGER Address of your VMProtect Target!
+--------------------------------------------------------
+API LOGGER is that address where you can see the used VMed direct APIs in the register 
+after VMP did got them from the module exports.The way is very simple.
+
+VMP does call LoadLibraryA to load / get the ImageBase of the desired module and after this 
+it will check the exports of the module to find the desired API address for it own protector and 
+also for the target itself [only if used]!
+
+The way: LoadLibraryA [called by VMP] til return of API back to VMP code
+         ImageBase of module XY is in eax register
+         Memory BP on eax ImageBase
+         Now the VMP code access the exports reading the PE Header
+         Just trace till export are found and copied to register
+         Trace go on will export will checked if there or not
+         If export are not there = VMP Message - Failed
+         So on the export check we will just bypass the check to failed so that we come
+         quickly to the return output = Our API LOGGER Address.
+         
+PRESS >>> PAUSE <<< if its to fast to read it!!!
+
+
+I show you a exsample now......
+
+-----------------------------------------------------------
+00627489                   8B70 3C             MOV ESI,DWORD PTR DS:[EAX+3C]
+00622117                   01C6                ADD ESI,EAX      
+-------------
+7C8000F0    50 45 00 00>ASCII "PE"           ; PE signature (PE)
+-------------
+0062211C                   8B56 78             MOV EDX,DWORD PTR DS:[ESI+78]
+-------------
+$+78     >  2C260000    DD 0000262C          ;  Export Table address = 262C
+-------------
+00622123                   85D2                TEST EDX,EDX
+005478BE                  /0F84 FA8C0D00       JE 006205BE            
+0061FCC1                   C2 1800             RETN 18    ; API LOGGER Address!
+-----------------------------------------------------------
+
+So on this way you can find the API LOGGER return very easy and you only need to force 
+the jump condition of the export check in edx in that case.If VMP can't read the exports then it will 
+give us the failed message about it.
+
+VMProtect used first the kernel32.dll & ntdll.dll to read the APIs for itself and after that it read the 
+APIs for the main target.
+
+kernel32.dll
+ntdll.dll
+----------------
+user32.dll  // start of main API targets
+----------------
+
+PRESS >>> PAUSE <<< if its to fast to read it!!!
+
+
+
+Script Setup:
+----------------------------
+Before we use the script for the first time we have to enter the dll path of the ARImpRec.dll.Open 
+the script and got to label USER_OPTIONS:
+
+//////////////////////////////////////////////////////////////////
+USER_OPTIONS:
+mov ARIMPREC_PATH,       "C:\VMProtect Ultra Unpacker 1.0 Tutorial\ARImpRec.dll"
+mov GTC_ON,               01  // Enable it to patch the GTC API direct - set to 00 = disbaled
+mov Show_Windows_Version, 02  // Does show your windows see below
+mov KEEP_PACKER_IMPORTS,  01  // Some VMP code can still use this imports in your dump!Set to 01 to keep them!
+//////////////////////////////////////////////////////////////////
+//  Show_Windows_Version x 3
+//
+//  00 = Get only Name  
+//  01 = Get WinVersion and Name
+//  02 = All disbaled
+
+So the important thing is to enter "YOUR" path to the dll.Above you can see my path to the dll.
+Just enter your new path and save the script.The script does use this dll later for the API addresses 
+to get quickly API Names | Ordinals | Module Owners by Address.So the dll is very handy for me and I will 
+also save more work to write another ASM code with Olly to check this stuff.
+
+The ARImpRec.dll is written by Nacho_dj from ARTeam - Big Special Thanks :)
+
+The other options can you optinal enabled or disable.
+
+Get only Name  = Your computer name
+Get WinVersion = Your OS til win7 only
+Also you can disable both with 02 to save time.
+
+So now you are ready to use the script.
+
+
+
+
+Target Unpacking with the script:
+----------------------------
+Ok you have seen that the script first try to find the OEP near OEP and created a OEP txt file with the 
+OEP RVA address.If the script can not find the OEP then you have to find the OEP near OEP by yourself and 
+then create the txt file and enter the RVA you found.Without that file the script will not start the 
+unpack process!
+
+PRESS >>> PAUSE <<< if its to fast to read it!!!
+
+Lets unpack now!
+
+
+So this target used no VMed APIs for the main target itself!Just check this manually with stops at the 
+API LOGGER or just check the VMP code for Re-Calc API = VMed API.
+
+Exsample: 
+
+7C80981A InterlockedDecrement at API LOGGER address
+-------------
+VMP does re-calc [encrypt] the the direct address and put the new values for decrypt into target.
+
+0052750D  MOV EBX,434E18
+004FB3C5  MOV EBX,DWORD PTR DS:[EBX+1124BC] points to 005472D4
+-------------------
+005472D4  D0D29D85
+
+EBX = D0D29D85
+
+004FB3CF  LEA EBX,DWORD PTR DS:[EBX+ABADFA95] points to 7C80981A InterlockedDecrement
+
+004FB402  RETN 40 = return to direct API InterlockedDecrement
+
+So remember if the script tell you something about found VMed APIs then I mean only this kind of APIs.
+
+PRESS >>> PAUSE <<< if its to fast to read it!!!
+
+
+
+On the next run with the script it does unpack your target like you have seen now.
+No manually import fixing need anymore so the script does create a own new import table and added all 
+used sections manually to the created new file.So you have seen I have to do almost nothing anymore 
+just pressing the message boxed if the script ask you.Alway read the message boxed and choose the right 
+decission and that all.
+
+
+That was our first unpack with the script in slow mode.In the next video I show you some other unpacks 
+and at the end we will test our unpacked files under a other OS.
+
+PRESS >>> PAUSE <<< if its to fast to read it!!!
+
+
+
+
+----------------------------
+00415D05    C2 5C00                 RETN 5C                                       ; Manually found!
+---------------------------
+
+
+boxed.dll
+---------------------------
+The boxed dll you have to extract manually later out of the main target and you need to unpack this 
+dll too.The script does not do this for you!
+
+
+
+The main target is unpacked but only full working with the boxed.dll which I already unpacked before. 
+Just watch my video exsample about boxed dll.
+
+
+
+Now I show you how the files run under a other OS in my case I unpacked the file on XP SP3 and I will 
+test them under XP SP0.
+
+
+So you have seen that all unpacked files are working under the other OS also the files with using 
+a resources protection are working very well.The files of the Unpacked old folder are also working 
+but not the files they are using the resource protection so you have seen that you can't see the icon 
+or some file functions are not working like the info button in the notepad file.So this older files 
+using only a static resources patch and the new files a dynamic one so that your files will work on 
+all systems correctly.
+
+So then have fun with my new script.
+
+
+Merry Christmas and a Happy New Year for all of you.
+
+
+LCF-AT

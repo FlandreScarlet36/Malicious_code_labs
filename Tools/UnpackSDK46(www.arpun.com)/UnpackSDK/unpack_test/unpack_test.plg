@@ -1,0 +1,54 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: unpack_test - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x804 /fo"Release/unpack_test.res" /d "NDEBUG" /d "_AFXDLL" "E:\WORK\vmunpack\unpack_test\unpack_test.rc"" 
+Creating temporary file "C:\DOCUME~1\yaojiwei\LOCALS~1\Temp\RSP1D9.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Release/unpack_test.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"E:\WORK\vmunpack\unpack_test\init_peid.cpp"
+"E:\WORK\vmunpack\unpack_test\init_vmpack.cpp"
+"E:\WORK\vmunpack\unpack_test\unpack_test.cpp"
+"E:\WORK\vmunpack\unpack_test\unpack_testDlg.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\yaojiwei\LOCALS~1\Temp\RSP1D9.tmp" 
+Creating temporary file "C:\DOCUME~1\yaojiwei\LOCALS~1\Temp\RSP1DA.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /Fp"Release/unpack_test.pch" /Yc"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"E:\WORK\vmunpack\unpack_test\StdAfx.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\yaojiwei\LOCALS~1\Temp\RSP1DA.tmp" 
+Creating temporary file "C:\DOCUME~1\yaojiwei\LOCALS~1\Temp\RSP1DB.tmp" with contents
+[
+/nologo /subsystem:windows /incremental:no /pdb:"Release/unpack_test.pdb" /machine:I386 /out:"Release/unpack_test.exe" 
+.\Release\init_peid.obj
+.\Release\init_vmpack.obj
+.\Release\StdAfx.obj
+.\Release\unpack_test.obj
+.\Release\unpack_testDlg.obj
+.\Release\unpack_test.res
+]
+Creating command line "link.exe @C:\DOCUME~1\yaojiwei\LOCALS~1\Temp\RSP1DB.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+StdAfx.cpp
+Compiling...
+init_peid.cpp
+init_vmpack.cpp
+unpack_test.cpp
+unpack_testDlg.cpp
+Generating Code...
+Linking...
+
+
+
+<h3>Results</h3>
+unpack_test.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

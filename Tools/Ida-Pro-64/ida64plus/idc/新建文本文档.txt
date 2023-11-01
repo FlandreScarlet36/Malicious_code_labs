@@ -1,0 +1,65 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//Write repeatble comment to the ida database.Such as the Chinese characters exported from OD    //
+//The data formart show be like fallows:                                                         //
+//007714F4  发现无线设备, 连接中......                                                           //
+//007714F8  发现有线设备, 连接中......                                                           //
+//The first is a address, and then 2 spaces ,and the last is the Comment for the data            //
+//Script by obaby , site:http://www.h4ck.org.cn ,Email:root@h4ck.ws ,Date:11:59 2011-11-7        //
+///////////////////////////////////////////////////////////////////////////////////////////////////
+#include <idc .idc>
+static main()
+{
+ Message("====================IDA repeatble Comments Marker====================\n");
+ Message("                        Code By obaby                                \n");
+ Message("                       http://www.h4ck.ws                            \n");
+ Message("=====================================================================\n");
+ auto rComm,addr,linetext,oldname,handle,filelen,off,rCommlen,file,path,oldhandle;
+ file = AskFile(1,"*.txt","Please Select the comment file");
+ path = GetIdbPath();
+ path = substr(path, 0, strlen(path) - 4) + "CmtBackup.txt";// Back up orginal names
+ oldhandle = fopen(path,"w");
+ handle = fopen(file,"r");
+ off = 0;
+ if (handle == 0 || oldhandle == 0)
+	{
+	 Message("ReadFile or Createfile Error! \n");
+	}
+ else {
+	 filelen = filelength(handle);
+	 if (filelen == 0)
+		{
+			Message("The input file is empty! \n");
+		}
+	else {
+		Message("Now BackUp Old Comments and Mark  new Comments..........\n");
+		while (off < filelen)
+			{
+				linetext = readstr(handle);
+				addr = substr(linetext,0,8);	    	//get the addres
+				addr = form("0x%s",addr);				//format the addres in 0x12345678 type
+				rCommlen = strlen(linetext);
+				rComm  = substr(linetext,9,rCommlen -1 );//get the rCommtion name
+				off = off + rCommlen;
+				if (strlen(rComm) == 0)
+					{
+						break;
+					}
+				Message("Comments addr is %s,and Comments is %s. \n",addr,rComm);
+				oldname = Name(addr);	//get the old names
+				if (strlen(oldname) ==0)
+					{
+						Message("Error:get Comments at addr %s Failed.\n",addr);
+					}else {
+						writestr(oldhandle,addr + "  " + oldname + "\n"); //write the old name and address into the backupfile
+					}
+				if (!MakeRptCmt(addr,rComm))
+					{
+						Message("Change Function %s,at Address %X failed.\n",rComm,addr);
+					}
+			}		
+		}
+	fclose(handle);
+	fclose(oldhandle);
+	Message("Conguratelations,All successed ,now Exit.......\n");
+	}
+}
