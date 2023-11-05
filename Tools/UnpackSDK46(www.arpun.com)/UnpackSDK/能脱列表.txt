@@ -1,0 +1,102 @@
+
+目前能脱的壳:
+
+upx 0.5x-3.00
+aspack 1.x--2.x
+PEcompact 0.90--1.76被试验了
+PEcompact 2.06--2.79被试验了
+NsPack (该系列壳都这样脱的)
+nPack
+FSG 1.0--1.3 v1.31 v1.33 v2.0
+VGCrypt0.75
+expressor 1.0--1.5 (某网站的闪电壳就是这个)
+dxpack v0.86 v1.0
+!Epack v1.0 v1.4
+mew1.1
+packMan 1.0
+PEDiminisher 0.1
+pex 0.99
+petite v1.2 - v1.4
+petite v2.2
+petite v2.3
+winkript 1.0
+pklite32 1.1
+pepack 0.99 - 1.0
+pcshrinker 0.71
+wwpack32 1.0 - 1.2
+upack v0.10 - v0.32
+upack v0.33 - v0.399
+RLPack Basic Edition 1.11--1.18
+exe32pack v1.42
+kbys 0.22 0.28
+morphine v1.3 //这两个壳，代码被解密出来，无法dump
+morphine v1.6
+morphine v2.7
+yoda's protector v1.02
+yoda's protector v1.03.2
+yoda's crypt v1.2
+yoda's crypt v1.3
+EXE Stealth v2.72--v2.76
+bjfnt v1.2 - v1.3
+HidePE 1.0--1.1
+jdpack v1.01
+jdpack v2.0
+jdpack v2.13
+PEncrypt v3.1
+PEncrypt v4.0
+Stone's PE Crypt v1.13
+telock v0.42
+telock v0.51 (其用了OEP自动识别技术,可能存在OEP定位不精确)
+telock v0.60
+telock v0.70
+telock v0.71
+telock v0.80(从这个版本开始用了自己发掘并分析kernel32.dll，来导出函数)
+telock v0.90
+telock v0.92
+telock v0.95 v0.96 v0.98 v0.99
+ezip v1.0
+hmimys-packer v1.0
+jdprotect v0.9b
+lamecrypt
+UPolyX v0.51(此类壳均这样脱)
+StealthPE 1.01(贼晕，跟HidePE 1.1一样)
+StealthPE 2.2
+depack
+涛涛压缩器(跟kbys0.28一样)
+polyene 0.01
+DragonArmour
+EP Protector v0.3
+闪电壳(其实就是expressor)
+BeRoEXEPacker
+PackItBitch
+木马彩衣
+mkfpack
+anti007 v2.5 v2.6
+yzpack v1.1 v1.2 v2.0
+spack_method1 v1.0 v1.1 v1.2 v1.21
+spack_method2 v1.1 v1.2 v1.21
+xj1001
+xj1000
+xj看雪测试版
+xj1003
+xpal4
+仙剑-凄凉雪
+仙剑-望海潮
+mslrh0.31 v0.32
+[G!X]'s Protect(传说中的mslrh0.2??)
+
+
+
+
+/*********系统dll加载说明*************/
+
+
+anti007利用了开始LoadLibraryA每个dll，然后自己分析要导出函数地址
+
+upack0.35它是用堆栈来获取kernel32.dll地址，然后自己分析出GetProcAddress地址，以后就不用这个特性了
+
+yzpack利用PEB找到kernel32.dll地址，然后自己分析出4/5个函数，以后也不用这个特性了
+
+petite v2.2 v2.3未仔细观察，不知它为上两种情况的那种，有待考证
+
+telock0.90系列，用了程序load时GetModuleHandleA的地址，通过and 0xffff0000操作来找到kernel32.dll地址,然后调用GetProcAddress来导出LoadbraryA函数，以后就不用这个特性了
